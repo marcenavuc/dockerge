@@ -1,85 +1,33 @@
-# Лаба 2
+# Лаба 3
 
-Сервисы:
-1. Сервис db (PostgreSQL)
-	*	Образ: postgres:15 Используется PostgreSQL версии 15.
-	*	Перезапуск: always Контейнер автоматически перезапускается при сбоях.
-	*	Переменные окружения:
-	*	POSTGRES_USER: задаётся через переменную DB_USER или по умолчанию user.
-	*	POSTGRES_PASSWORD: задаётся через переменную DB_PASSWORD или по умолчанию password.
-	*	POSTGRES_DB: задаётся через переменную DB_NAME или по умолчанию spicyragdb.
-	*	Порты:Порт 5432 PostgreSQL маппируется на порт 5434 хоста.
-	*	Тома:postgres_data:/var/lib/postgresql/data — для сохранения данных базы вне контейнера. data:/docker-entrypoint-initdb.d — для скриптов инициализации базы данных.
-	*	Сеть: подключён к сети network.
+### Запуск minikube и проверка, что все правильно установилось, файлов конфигурации
+![Запуск minikube](photos/minicube_start.png)
+![Docker ps](photos/docker_ps.png)
+![Kubectl config view](photos/kubectl_config_view.png)
 
-2. Сервис elasticsearch
+### Применение манифестов
+![Kubectl create](photos/kubectl_create_*.png)
 
-	*	Образ: docker.elastic.co/elasticsearch/elasticsearch:7.9.3. Используется Elasticsearch версии 7.9.3.
-	*	Переменные окружения:
-	*	discovery.type=single-node — Elasticsearch работает в режиме одиночной ноды.
-	*	ES_JAVA_OPTS=-Xms1g -Xmx1g — выделение 1 ГБ памяти для Java Heap.
-	*	Порты:
-	*	9200:9200 — основной порт HTTP API Elasticsearch.
-	*	9300:9300 — порт для внутреннего взаимодействия нод.
-	*	Тома:
-es_data:/usr/share/elasticsearch/data — для сохранения данных вне контейнера.
-	*	Сеть: подключён к сети network.
+### Проверка применения манифестов
+![Kubectl get](photos/kubectl_get_*.png)
 
-3. Сервис interface (FastAPI)
-	*	Назначение: Backend на FastAPI, запускаемый через Uvicorn.
-	*	Сборка. Собирается из текущего контекста (build: .).
-	*	Команда запуска:
-	*	Ожидается доступность PostgreSQL (через pg_isready) и Elasticsearch (через curl).
-	*	После готовности зависимостей запускается сервер Uvicorn на 0.0.0.0:8000 с поддержкой перезагрузки кода (--reload).
-	*	Порты: Порт 8000 маппируется на хост.
-	*	Зависимости: Зависит от сервиса db.
-	*	Тома: ./interface:/app/interface — локальная папка с кодом монтируется в контейнер.
-	*	Сеть: подключён к сети network.
-	*	Healthcheck: Проверяет доступность приложения по адресу http://localhost:8000:
-	*	Интервал: каждые 30 секунд.
-	*	Тайм-аут: 10 секунд.
-	*	Повторные попытки: 5 раз.
-
-4. Сервис streamlit
-	*	Назначение: Приложение для визуализации данных на Streamlit.
-	*	Сборка: Собирается из текущего контекста (build: .).
-	*	Команда запуска: Запускается Streamlit-приложение streamlit/app.py на порту 8501.
-	*	Порты: Порт 8501 маппируется на хост.
-	*	Зависимости: Зависит от сервиса interface.
-	*	Сеть: подключён к сети network.
-
-Тома (volumes)
-	*	postgres_data: Для хранения данных PostgreSQL.
-	*	es_data: Для хранения данных Elasticsearch.
-
-Сети (networks)
-	*	network: Общая сеть для взаимодействия всех сервисов.
+### Запуск nextcloud
+![Nextcloud logs](photos/nextcloud_logs.png)
+![Nextcloud open](photos/nextcloud_open.png)
 
 
-### Запуск
-```bash
-docker compose up -d
-```
+### Nextcloud login page 
+![Nextcloud login page](photos/nextcloud_login_new.png)
 
+### Minikube dash
+![Minikube dash](photos/minikube_dash.png)
 
-### Можно ли ограничивать ресурсы (например, память или CPU) для сервисов в docker-compose.yml? Если нет, то почему, если да, то как
-Да, в docker-compose.yml можно ограничивать ресурсы для сервисов, ram, cpu для каждого сервиса. Пример:
-```
-services:
-  interface:
-    ...
-    deploy:
-      resources:
-        limits: - сколько ресурсов максимально можно использовать
-          memory: 2048M
-          cpus: 4
-        reservations: - сколько ресурсов минимально надо использовать
-          memory: 512M
-          cpus: 1
-```
+### Вопрос: важен ли порядок выполнения этих манифестов? Почему?
+Да, порядок выполнения манифестов важен, потому что некоторые ресурсы зависят от других. Например:
+	1.	ConfigMaps и Secrets должны быть созданы перед ресурсами, которые их используют (например, Deployments или Pods). Иначе, если Deployment пытается обратиться к несуществующему ConfigMap или Secret, он не сможет запуститься.
+	2.	Services могут быть созданы после ConfigMaps и Secrets, но до использования этих сервисов другими компонентами (например, если сервис используется как POSTGRES_HOST).
+	3.	Deployments или Pods должны быть последними, так как они зависят от всех вышеуказанных ресурсов.
 
-### Как можно запустить только определенный сервис из docker-compose.yml, не запуская остальные?
-```bash
-docker compose up <service-name>
-docker compose up db # пример
-```
+### Вопрос: что (и почему) произойдет, если отскейлить количество реплик postgres-deployment в 0, затем обратно в 1, после чего попробовать снова зайти на Nextcloud? 
+Если отскейлить Postgres в 0, то postgres остановится, nextcloud потеряет коннект к постгресу. Но вернув обратно в 1 кол-во реплик, nextcloud не сможет обратно подключиться к postgres и будет отдавать Internal server Error, видимо после обрыва коннекта не пытается переподключиться вновь.
+
