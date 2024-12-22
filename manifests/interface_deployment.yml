@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interface
+  labels:
+    app: interface
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: interface
+  template:
+    metadata:
+      labels:
+        app: interface
+    spec:
+      containers:
+      - name: interface
+        image: dockerge-interface
+        imagePullPolicy: "Never"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DB_HOST
+          value: postgres
+        - name: ELASTICSEARCH_HOST
+          value: elasticsearch
