@@ -21,8 +21,7 @@
 	*	Порты:
 	*	9200:9200 — основной порт HTTP API Elasticsearch.
 	*	9300:9300 — порт для внутреннего взаимодействия нод.
-	*	Тома:
-es_data:/usr/share/elasticsearch/data — для сохранения данных вне контейнера.
+	*	Тома: es_data:/usr/share/elasticsearch/data — для сохранения данных вне контейнера.
 	*	Сеть: подключён к сети network.
 
 3. Сервис interface (FastAPI)
@@ -35,7 +34,7 @@ es_data:/usr/share/elasticsearch/data — для сохранения данны
 	*	Зависимости: Зависит от сервиса db.
 	*	Тома: ./interface:/app/interface — локальная папка с кодом монтируется в контейнер.
 	*	Сеть: подключён к сети network.
-	*	Healthcheck: Проверяет доступность приложения по адресу http://localhost:8000:
+	*	Healthcheck: Проверяет доступность приложения по адресу http://localhost:8000
 	*	Интервал: каждые 30 секунд.
 	*	Тайм-аут: 10 секунд.
 	*	Повторные попытки: 5 раз.
@@ -48,11 +47,11 @@ es_data:/usr/share/elasticsearch/data — для сохранения данны
 	*	Зависимости: Зависит от сервиса interface.
 	*	Сеть: подключён к сети network.
 
-Тома (volumes)
+5. Volumes
 	*	postgres_data: Для хранения данных PostgreSQL.
 	*	es_data: Для хранения данных Elasticsearch.
 
-Сети (networks)
+6. Networks:
 	*	network: Общая сеть для взаимодействия всех сервисов.
 
 
