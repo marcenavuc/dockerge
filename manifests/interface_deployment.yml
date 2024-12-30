@@ -20,8 +20,8 @@ spec:
         imagePullPolicy: "Never"
         ports:
         - containerPort: 8000
-        env:
-        - name: DB_HOST
-          value: postgres
-        - name: ELASTICSEARCH_HOST
-          value: elasticsearch
+        envFrom:
+        - configMapRef:
+            name: interface-configmap
+        - secretRef:
+            name: interface-secret
